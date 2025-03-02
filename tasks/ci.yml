@@ -1,0 +1,44 @@
+version: '3'
+
+tasks:
+  all:
+    desc: "Run all CI checks"
+    cmds:
+      - task: check
+      - task: fmt
+      - task: clippy
+      - task: test
+      - task: commitlint
+    silent: true
+
+  check:
+    desc: "Run cargo check"
+    cmds:
+      - cargo check
+
+  fmt:
+    desc: "Run rustfmt"
+    cmds:
+      - cargo fmt --all -- --check
+
+  clippy:
+    desc: "Run clippy"
+    cmds:
+      - cargo clippy --all-features
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - cargo test --verbose
+
+  commitlint:
+    desc: "Check conventional commit format"
+    cmds:
+      - echo "Installing commitlint if needed..."
+      - command -v npx >/dev/null 2>&1 || { echo "Node.js/npm not installed. Please install it to run commitlint."; exit 1; }
+      - npm list -g @commitlint/cli >/dev/null 2>&1 || npm install -g @commitlint/cli @commitlint/config-conventional
+      - |
+        if [ ! -f commitlint.config.js ]; then
+          echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+        fi
+      - git log -1 --pretty=format:"%s" | npx commitlint
